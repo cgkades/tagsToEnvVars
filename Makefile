@@ -52,8 +52,6 @@ define build-docker
 		/bin/sh -c './build/update_artifacts_json.sh "$(ARTIFACT_DOCKER)" "$1" "$$IMG" "$2" "$3" && chown -R $(UID):$(GID) /source'
 endef
 
-CMDS := $(shell cd cmd && ls)
-
 version:
 	echo "$(SEM_VER)"
 
@@ -69,14 +67,12 @@ unit-tests:
 	echo "Running tests"
 	$(call run,./build/run_tests.sh)
 
-cmds: $(CMDS)
-
-%: cmd/%/main.go unit-tests
-	echo "Building $*"
-	$(call run,./build/run_cmd_build.sh,$*)
-
 tagsToEnvVars:
 	echo "Building....."
 	docker run -it $(DOCKER_RUN_ARGS) go build .
 
 all: tagsToEnvVars
+
+tests:
+	echo "Running tests..."
+	docker run -it $(DOCKER_RUN_ARGS) go test
