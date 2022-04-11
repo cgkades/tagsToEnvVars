@@ -21,9 +21,14 @@ pipeline {
                       [$class: 'VaultSecretValue', envVar: 'AWS_SECRET_ACCESS_KEY', vaultKey: 'secret-access-key'],
                     ]]
             ]]) {
+<<<<<<< HEAD
                 sh "git submodule init && git submodule sync && git submodule update --init --recursive"
                 sh 'mkdir -p build/output && ln -s build/output buildrunner.results'
                 sh 'make clean all publish'
+=======
+                sh 'mkdir -p build/output && ln -s build/output buildrunner.results'
+                sh 'make clean all'
+>>>>>>> a7f5b2aa8f8ad16dc0cc01049612563fd513680d
                 script {
                     com.adobe.buildrunner.BuildrunnerUtils.processArtifacts(this)
                 }
