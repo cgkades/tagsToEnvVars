@@ -42,7 +42,7 @@ func main() {
 	envVarsString += TagsToString(tags)
 
 	if *fileName != "" {
-		err = ioutil.WriteFile(*fileName,[]byte(envVarsString), 0644)
+		err = ioutil.WriteFile(*fileName, []byte(envVarsString), 0644)
 	} else {
 		fmt.Println(envVarsString)
 	}
@@ -60,14 +60,23 @@ func exitErrorf(msg string, args ...interface{}) {
 func TagsToString(tagMap map[string]string) string {
 	var toString string
 	for key, value := range tagMap {
-		toString += fmt.Sprintf("%s=\"%s\"\n", strings.ReplaceAll(strings.ToUpper(key),".", "_"), value)
+		key = strings.ToUpper(key)
+		key = strings.ReplaceAll(key, ":", "_")
+		key = strings.ReplaceAll(key, ".", "_")
+		toString += fmt.Sprintf("%s=\"%s\"\n", key, value)
 	}
 	return toString
 }
 
-func RegionInstanceId() (region string, instanceID string) {
-	c := ec2metadata.New(session.New())
-	ec2InstanceIdentifyDocument, _ := c.GetInstanceIdentityDocument()
+func RegionInstanceId(idnentityDocument ...ec2metadata.EC2InstanceIdentityDocument) (region string, instanceID string) {
+	var ec2InstanceIdentifyDocument ec2metadata.EC2InstanceIdentityDocument
+	if len(idnentityDocument) > 0 {
+		ec2InstanceIdentifyDocument = idnentityDocument[0]
+	} else {
+		c := ec2metadata.New(session.New())
+		ec2InstanceIdentifyDocument, _ = c.GetInstanceIdentityDocument()
+	}
+
 	region = ec2InstanceIdentifyDocument.Region
 	instanceID = ec2InstanceIdentifyDocument.InstanceID
 	//fmt.Println(instanceID)
@@ -76,7 +85,7 @@ func RegionInstanceId() (region string, instanceID string) {
 
 func GetTags() (tagmap map[string]string, err error) {
 	b := backoff.NewExponentialBackOff()
-	b.MaxElapsedTime = 3 *time.Minute
+	b.MaxElapsedTime = 3 * time.Minute
 
 	region, instanceID := RegionInstanceId()
 	sess, err := session.NewSession(&aws.Config{
@@ -104,8 +113,6 @@ func GetTags() (tagmap map[string]string, err error) {
 		}
 	}, b)
 
-
-
 	if backoffErr != nil {
 		fmt.Printf("Error describing instances: %s", backoffErr)
 		return tagMap, backoffErr
@@ -116,7 +123,7 @@ func GetTags() (tagmap map[string]string, err error) {
 	for idx := range resp.Reservations {
 		for _, inst := range resp.Reservations[idx].Instances {
 			for _, tag := range inst.Tags {
-				
+
 				tagMap[*tag.Key] = *tag.Value
 			}
 		}
